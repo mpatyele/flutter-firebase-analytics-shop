@@ -13,6 +13,19 @@ class MiniShopApp extends StatefulWidget {
 
 class _MiniShopAppState extends State<MiniShopApp> {
   final List<Product> cartItems = [];
+  bool isLoggedIn = false;
+
+  void login() {
+    setState(() {
+      isLoggedIn = true;
+    });
+  }
+
+  void signUp() {
+    setState(() {
+      isLoggedIn = true;
+    });
+  }
 
   void addToCart(Product product) {
     setState(() {
@@ -37,55 +50,161 @@ class _MiniShopAppState extends State<MiniShopApp> {
         ),
         useMaterial3: true,
       ),
-      home: HomeScreen(
-        cartItems: cartItems,
-        onAddToCart: addToCart,
-        onClearCart: clearCart,
-      ),
+      home: isLoggedIn
+          ? HomeScreen(
+              cartItems: cartItems,
+              onAddToCart: addToCart,
+              onClearCart: clearCart,
+            )
+          : AuthScreen(
+              onLogin: login,
+              onSignUp: signUp,
+            ),
     );
   }
 }
 
 class Product {
+  final String id;
   final String name;
   final String description;
   final double price;
   final IconData icon;
+  final String category;
 
   const Product({
+    required this.id,
     required this.name,
     required this.description,
     required this.price,
     required this.icon,
+    required this.category,
   });
 }
 
 const List<Product> products = [
   Product(
+    id: 'p001',
     name: 'Wireless Headphones',
     description: 'Noise-cancelling headphones with premium sound quality.',
     price: 89.99,
     icon: Icons.headphones,
+    category: 'Electronics',
   ),
   Product(
+    id: 'p002',
     name: 'Smart Watch',
     description: 'Track workouts, notifications, and daily activity.',
     price: 129.99,
     icon: Icons.watch,
+    category: 'Wearables',
   ),
   Product(
+    id: 'p003',
     name: 'Travel Backpack',
     description: 'Minimal, durable backpack for work, school, and travel.',
     price: 74.99,
     icon: Icons.backpack,
+    category: 'Accessories',
   ),
   Product(
+    id: 'p004',
     name: 'Desk Lamp',
     description: 'Modern LED desk lamp with adjustable brightness.',
     price: 39.99,
     icon: Icons.light,
+    category: 'Home Office',
   ),
 ];
+
+class AuthScreen extends StatelessWidget {
+  final VoidCallback onLogin;
+  final VoidCallback onSignUp;
+
+  const AuthScreen({
+    super.key,
+    required this.onLogin,
+    required this.onSignUp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F4FB),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const Spacer(),
+              Container(
+                height: 130,
+                width: 130,
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple,
+                  borderRadius: BorderRadius.circular(36),
+                ),
+                child: const Icon(
+                  Icons.shopping_bag,
+                  color: Colors.white,
+                  size: 76,
+                ),
+              ),
+              const SizedBox(height: 32),
+              const Text(
+                'Mini Shop',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'A Flutter e-commerce demo app built to showcase Firebase Analytics event tracking.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton(
+                  onPressed: onLogin,
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: OutlinedButton(
+                  onPressed: onSignUp,
+                  child: const Text(
+                    'Create Account',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Demo app for analytics implementation',
+                style: TextStyle(
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class HomeScreen extends StatelessWidget {
   final List<Product> cartItems;
@@ -148,22 +267,44 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: GridView.builder(
-          itemCount: products.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 0.78,
-          ),
-          itemBuilder: (context, index) {
-            final product = products[index];
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Featured Products',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Browse products and complete a sample checkout flow.',
+              style: TextStyle(
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Expanded(
+              child: GridView.builder(
+                itemCount: products.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 0.72,
+                ),
+                itemBuilder: (context, index) {
+                  final product = products[index];
 
-            return ProductCard(
-              product: product,
-              onAddToCart: onAddToCart,
-            );
-          },
+                  return ProductCard(
+                    product: product,
+                    onAddToCart: onAddToCart,
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -210,11 +351,19 @@ class ProductCard extends StatelessWidget {
                 child: Center(
                   child: Icon(
                     product.icon,
-                    size: 64,
+                    size: 60,
                     color: Colors.deepPurple,
                   ),
                 ),
               ),
+              Text(
+                product.category,
+                style: const TextStyle(
+                  color: Colors.black45,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 4),
               Text(
                 product.name,
                 style: const TextStyle(
@@ -297,6 +446,17 @@ class ProductDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 28),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                product.category,
+                style: const TextStyle(
+                  color: Colors.black45,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -414,7 +574,13 @@ class CartScreen extends StatelessWidget {
                               ),
                             ),
                             subtitle: Text(
+                              product.category,
+                            ),
+                            trailing: Text(
                               '\$${product.price.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         );
@@ -575,6 +741,15 @@ class CheckoutSuccessScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 16,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'This screen represents the final purchase event in the analytics funnel.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black54,
                   height: 1.5,
                 ),
               ),
