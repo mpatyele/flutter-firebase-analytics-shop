@@ -6,9 +6,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const MiniShopApp());
 }
@@ -27,36 +25,42 @@ class _MiniShopAppState extends State<MiniShopApp> {
   final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
   void login() {
-  analytics.logLogin(loginMethod: 'demo_button');
-  logScreen('home_screen');
+    analytics.logLogin(loginMethod: 'demo_button');
+    logScreen('home_screen');
 
-  setState(() {
-    isLoggedIn = true;
-  });
-}
+    setState(() {
+      isLoggedIn = true;
+    });
+  }
 
   void signUp() {
-  analytics.logSignUp(signUpMethod: 'demo_button');
-  logScreen('home_screen');
+    analytics.logSignUp(signUpMethod: 'demo_button');
+    logScreen('home_screen');
 
-  setState(() {
-    isLoggedIn = true;
-  });
-}
+    setState(() {
+      isLoggedIn = true;
+    });
+  }
 
   void addToCart(Product product) {
-  analytics.logAddToCart(
-    currency: 'USD',
-    value: product.price,
-    items: [
-      analyticsItemFromProduct(product),
-    ],
-  );
+    analytics.logAddToCart(
+      currency: 'USD',
+      value: product.price,
+      items: [
+        AnalyticsEventItem(
+          itemId: product.id,
+          itemName: product.name,
+          itemCategory: product.category,
+          price: product.price,
+          quantity: 1,
+        ),
+      ],
+    );
 
-  setState(() {
-    cartItems.add(product);
-  });
-}
+    setState(() {
+      cartItems.add(product);
+    });
+  }
 
   void clearCart() {
     setState(() {
@@ -65,18 +69,18 @@ class _MiniShopAppState extends State<MiniShopApp> {
   }
 
   AnalyticsEventItem analyticsItemFromProduct(Product product) {
-  return AnalyticsEventItem(
-    itemId: product.id,
-    itemName: product.name,
-    itemCategory: product.category,
-    price: product.price,
-    quantity: 1,
-  );
-}
+    return AnalyticsEventItem(
+      itemId: product.id,
+      itemName: product.name,
+      itemCategory: product.category,
+      price: product.price,
+      quantity: 1,
+    );
+  }
 
-void logScreen(String screenName) {
-  analytics.logScreenView(screenName: screenName);
-}
+  void logScreen(String screenName) {
+    analytics.logScreenView(screenName: screenName);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,9 +88,7 @@ void logScreen(String screenName) {
       title: 'Mini Shop',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: isLoggedIn
@@ -95,10 +97,7 @@ void logScreen(String screenName) {
               onAddToCart: addToCart,
               onClearCart: clearCart,
             )
-          : AuthScreen(
-              onLogin: login,
-              onSignUp: signUp,
-            ),
+          : AuthScreen(onLogin: login, onSignUp: signUp),
     );
   }
 }
@@ -160,11 +159,7 @@ class AuthScreen extends StatelessWidget {
   final VoidCallback onLogin;
   final VoidCallback onSignUp;
 
-  const AuthScreen({
-    super.key,
-    required this.onLogin,
-    required this.onSignUp,
-  });
+  const AuthScreen({super.key, required this.onLogin, required this.onSignUp});
 
   @override
   Widget build(BuildContext context) {
@@ -192,19 +187,13 @@ class AuthScreen extends StatelessWidget {
               const SizedBox(height: 32),
               const Text(
                 'Mini Shop',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               const Text(
                 'A Flutter e-commerce demo app built to showcase Firebase Analytics event tracking.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                ),
+                style: TextStyle(fontSize: 16, height: 1.5),
               ),
               const Spacer(),
               SizedBox(
@@ -212,10 +201,7 @@ class AuthScreen extends StatelessWidget {
                 height: 54,
                 child: FilledButton(
                   onPressed: onLogin,
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text('Login', style: TextStyle(fontSize: 16)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -233,9 +219,7 @@ class AuthScreen extends StatelessWidget {
               const SizedBox(height: 16),
               const Text(
                 'Demo app for analytics implementation',
-                style: TextStyle(
-                  color: Colors.black54,
-                ),
+                style: TextStyle(color: Colors.black54),
               ),
             ],
           ),
@@ -311,17 +295,12 @@ class HomeScreen extends StatelessWidget {
           children: [
             const Text(
               'Featured Products',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             const Text(
               'Browse products and complete a sample checkout flow.',
-              style: TextStyle(
-                color: Colors.black54,
-              ),
+              style: TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 18),
             Expanded(
@@ -365,12 +344,28 @@ class ProductCard extends StatelessWidget {
     return Card(
       elevation: 3,
       shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
         onTap: () {
+          FirebaseAnalytics.instance.logViewItem(
+            currency: 'USD',
+            value: product.price,
+            items: [
+              AnalyticsEventItem(
+                itemId: product.id,
+                itemName: product.name,
+                itemCategory: product.category,
+                price: product.price,
+                quantity: 1,
+              ),
+            ],
+          );
+
+          FirebaseAnalytics.instance.logScreenView(
+            screenName: 'product_detail_screen',
+          );
+
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -388,19 +383,12 @@ class ProductCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Center(
-                  child: Icon(
-                    product.icon,
-                    size: 60,
-                    color: Colors.deepPurple,
-                  ),
+                  child: Icon(product.icon, size: 60, color: Colors.deepPurple),
                 ),
               ),
               Text(
                 product.category,
-                style: const TextStyle(
-                  color: Colors.black45,
-                  fontSize: 12,
-                ),
+                style: const TextStyle(color: Colors.black45, fontSize: 12),
               ),
               const SizedBox(height: 4),
               Text(
@@ -457,9 +445,7 @@ class ProductDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4FB),
-      appBar: AppBar(
-        title: const Text('Product Details'),
-      ),
+      appBar: AppBar(title: const Text('Product Details')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -478,21 +464,14 @@ class ProductDetailScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                product.icon,
-                size: 110,
-                color: Colors.deepPurple,
-              ),
+              child: Icon(product.icon, size: 110, color: Colors.deepPurple),
             ),
             const SizedBox(height: 28),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 product.category,
-                style: const TextStyle(
-                  color: Colors.black45,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.black45, fontSize: 14),
               ),
             ),
             const SizedBox(height: 6),
@@ -521,10 +500,7 @@ class ProductDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               product.description,
-              style: const TextStyle(
-                fontSize: 16,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontSize: 16, height: 1.5),
             ),
             const Spacer(),
             SizedBox(
@@ -540,9 +516,7 @@ class ProductDetailScreen extends StatelessWidget {
                   onAddToCart(product);
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${product.name} added to cart'),
-                    ),
+                    SnackBar(content: Text('${product.name} added to cart')),
                   );
                 },
               ),
@@ -565,10 +539,7 @@ class CartScreen extends StatelessWidget {
   });
 
   double get subtotal {
-    return cartItems.fold(
-      0,
-      (total, product) => total + product.price,
-    );
+    return cartItems.fold(0, (total, product) => total + product.price);
   }
 
   @override
@@ -577,9 +548,7 @@ class CartScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4FB),
-      appBar: AppBar(
-        title: const Text('Cart'),
-      ),
+      appBar: AppBar(title: const Text('Cart')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: isCartEmpty
@@ -612,9 +581,7 @@ class CartScreen extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            subtitle: Text(
-                              product.category,
-                            ),
+                            subtitle: Text(product.category),
                             trailing: Text(
                               '\$${product.price.toStringAsFixed(2)}',
                               style: const TextStyle(
@@ -680,6 +647,34 @@ class CartScreen extends StatelessWidget {
                         style: TextStyle(fontSize: 16),
                       ),
                       onPressed: () {
+                        final analyticsItems = cartItems.map((product) {
+                          return AnalyticsEventItem(
+                            itemId: product.id,
+                            itemName: product.name,
+                            itemCategory: product.category,
+                            price: product.price,
+                            quantity: 1,
+                          );
+                        }).toList();
+
+                        FirebaseAnalytics.instance.logBeginCheckout(
+                          currency: 'USD',
+                          value: subtotal,
+                          items: analyticsItems,
+                        );
+
+                        FirebaseAnalytics.instance.logPurchase(
+                          currency: 'USD',
+                          value: subtotal,
+                          transactionId: DateTime.now().millisecondsSinceEpoch
+                              .toString(),
+                          items: analyticsItems,
+                        );
+
+                        FirebaseAnalytics.instance.logScreenView(
+                          screenName: 'checkout_success_screen',
+                        );
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -708,18 +703,11 @@ class EmptyCartView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.shopping_bag_outlined,
-            size: 90,
-            color: Colors.deepPurple,
-          ),
+          Icon(Icons.shopping_bag_outlined, size: 90, color: Colors.deepPurple),
           SizedBox(height: 24),
           Text(
             'Your cart is empty',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 12),
           Text(
@@ -760,37 +748,24 @@ class CheckoutSuccessScreen extends StatelessWidget {
                   color: Colors.deepPurple,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 80,
-                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 80),
               ),
               const SizedBox(height: 32),
               const Text(
                 'Purchase Complete',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 'Your order total was \$${total.toStringAsFixed(2)}.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                ),
+                style: const TextStyle(fontSize: 16, height: 1.5),
               ),
               const SizedBox(height: 12),
               const Text(
                 'This screen represents the final purchase event in the analytics funnel.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black54,
-                  height: 1.5,
-                ),
+                style: TextStyle(color: Colors.black54, height: 1.5),
               ),
               const Spacer(),
               SizedBox(
