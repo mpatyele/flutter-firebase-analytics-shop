@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MiniShopApp());
 }
 
@@ -15,29 +24,59 @@ class _MiniShopAppState extends State<MiniShopApp> {
   final List<Product> cartItems = [];
   bool isLoggedIn = false;
 
+  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+
   void login() {
-    setState(() {
-      isLoggedIn = true;
-    });
-  }
+  analytics.logLogin(loginMethod: 'demo_button');
+  logScreen('home_screen');
+
+  setState(() {
+    isLoggedIn = true;
+  });
+}
 
   void signUp() {
-    setState(() {
-      isLoggedIn = true;
-    });
-  }
+  analytics.logSignUp(signUpMethod: 'demo_button');
+  logScreen('home_screen');
+
+  setState(() {
+    isLoggedIn = true;
+  });
+}
 
   void addToCart(Product product) {
-    setState(() {
-      cartItems.add(product);
-    });
-  }
+  analytics.logAddToCart(
+    currency: 'USD',
+    value: product.price,
+    items: [
+      analyticsItemFromProduct(product),
+    ],
+  );
+
+  setState(() {
+    cartItems.add(product);
+  });
+}
 
   void clearCart() {
     setState(() {
       cartItems.clear();
     });
   }
+
+  AnalyticsEventItem analyticsItemFromProduct(Product product) {
+  return AnalyticsEventItem(
+    itemId: product.id,
+    itemName: product.name,
+    itemCategory: product.category,
+    price: product.price,
+    quantity: 1,
+  );
+}
+
+void logScreen(String screenName) {
+  analytics.logScreenView(screenName: screenName);
+}
 
   @override
   Widget build(BuildContext context) {
