@@ -62,6 +62,12 @@ class _MiniShopAppState extends State<MiniShopApp> {
     });
   }
 
+  void removeFromCart(Product product) {
+    setState(() {
+      cartItems.remove(product);
+    });
+  }
+
   void clearCart() {
     setState(() {
       cartItems.clear();
@@ -95,6 +101,7 @@ class _MiniShopAppState extends State<MiniShopApp> {
           ? HomeScreen(
               cartItems: cartItems,
               onAddToCart: addToCart,
+              onRemoveFromCart: removeFromCart,
               onClearCart: clearCart,
             )
           : AuthScreen(onLogin: login, onSignUp: signUp),
@@ -232,12 +239,14 @@ class AuthScreen extends StatelessWidget {
 class HomeScreen extends StatelessWidget {
   final List<Product> cartItems;
   final void Function(Product product) onAddToCart;
+  final void Function(Product product) onRemoveFromCart;
   final VoidCallback onClearCart;
 
   const HomeScreen({
     super.key,
     required this.cartItems,
     required this.onAddToCart,
+    required this.onRemoveFromCart,
     required this.onClearCart,
   });
 
@@ -261,6 +270,8 @@ class HomeScreen extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (_) => CartScreen(
                         cartItems: cartItems,
+                        onAddToCart: onAddToCart,
+                        onRemoveFromCart: onRemoveFromCart,
                         onClearCart: onClearCart,
                       ),
                     ),
@@ -306,11 +317,15 @@ class HomeScreen extends StatelessWidget {
             Expanded(
               child: GridView.builder(
                 itemCount: products.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: MediaQuery.of(context).size.width > 900
+                      ? 4
+                      : 2,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  childAspectRatio: 0.72,
+                  childAspectRatio: MediaQuery.of(context).size.width > 900
+                      ? 0.9
+                      : 0.72,
                 ),
                 itemBuilder: (context, index) {
                   final product = products[index];
@@ -530,21 +545,36 @@ class ProductDetailScreen extends StatelessWidget {
 
 class CartScreen extends StatelessWidget {
   final List<Product> cartItems;
+  final void Function(Product product) onAddToCart;
+  final void Function(Product product) onRemoveFromCart;
   final VoidCallback onClearCart;
 
   const CartScreen({
     super.key,
     required this.cartItems,
+    required this.onAddToCart,
+    required this.onRemoveFromCart,
     required this.onClearCart,
   });
 
-  double get subtotal {
+    double get subtotal {
     return cartItems.fold(0, (total, product) => total + product.price);
+  }
+
+  Map<Product, int> get groupedCartItems {
+    final Map<Product, int> groupedItems = {};
+
+    for (final product in cartItems) {
+      groupedItems[product] = (groupedItems[product] ?? 0) + 1;
+    }
+
+    return groupedItems;
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isCartEmpty = cartItems.isEmpty;
+    final groupedItems = groupedCartItems.entries.toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4FB),
@@ -557,36 +587,88 @@ class CartScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: ListView.separated(
-                      itemCount: cartItems.length,
+                      itemCount: groupedItems.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        final product = cartItems[index];
+                        final product = groupedItems[index].key;
+                        final quantity = groupedItems[index].value;
+                        final itemTotal = product.price * quantity;
 
                         return Card(
                           elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
                           ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: const Color(0xFFEDE7F6),
-                              child: Icon(
-                                product.icon,
-                                color: Colors.deepPurple,
-                              ),
-                            ),
-                            title: Text(
-                              product.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(product.category),
-                            trailing: Text(
-                              '\$${product.price.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 26,
+                                  backgroundColor: const Color(0xFFEDE7F6),
+                                  child: Icon(
+                                    product.icon,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        product.category,
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '\$${itemTotal.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          color: Colors.deepPurple,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                      ),
+                                      onPressed: () {
+                                        onRemoveFromCart(product);
+                                      },
+                                    ),
+                                    Text(
+                                      quantity.toString(),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.add_circle_outline,
+                                      ),
+                                      onPressed: () {
+                                        onAddToCart(product);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         );
@@ -647,13 +729,16 @@ class CartScreen extends StatelessWidget {
                         style: TextStyle(fontSize: 16),
                       ),
                       onPressed: () {
-                        final analyticsItems = cartItems.map((product) {
+                        final analyticsItems = groupedItems.map((entry) {
+                          final product = entry.key;
+                          final quantity = entry.value;
+
                           return AnalyticsEventItem(
                             itemId: product.id,
                             itemName: product.name,
                             itemCategory: product.category,
                             price: product.price,
-                            quantity: 1,
+                            quantity: quantity,
                           );
                         }).toList();
 
@@ -666,7 +751,8 @@ class CartScreen extends StatelessWidget {
                         FirebaseAnalytics.instance.logPurchase(
                           currency: 'USD',
                           value: subtotal,
-                          transactionId: DateTime.now().millisecondsSinceEpoch
+                          transactionId: DateTime.now()
+                              .millisecondsSinceEpoch
                               .toString(),
                           items: analyticsItems,
                         );
